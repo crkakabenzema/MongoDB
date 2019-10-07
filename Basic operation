@@ -1,0 +1,311 @@
+1. 创建 data\db 和 data\log 目录
+2. 在cmd 运行\bin\mongo.exe
+3. 在mongodb\mongod.cfg 创建配置文件，指定systemLog.path和storage.dbPath
+   systemLog:
+    destination: file
+    path: 
+   storage:
+    dbPath: 
+4. 通过执行mongod.exe，使用--install选项来安装服务，
+   使用--config选项来指定之前创建的配置文件。（bin\mongo.exe）= shell
+   mongodb\bin\mongod.exe --config "\mongodb\mongod.cfg" --install
+5. 启动MongoDB服务
+   net start MongoDB
+*  关闭MongoDB服务
+   net stop MongoDB
+*  移除MongoDB服务
+   \mongodb\bin\mongod.exe --remove
+
+6. 使用用户名和密码连接登陆到指定数据库test:
+   mongodb://admin:123456@localhost/test
+* 以安全模式连接到replica set，并且等待至少两个复制服务器成功写入，超时时间设置为2秒。
+  mongodb://host1,host2,host3/?safe=true;w=2;wtimeoutMS=2000
+  
+7. 创建数据库：
+   use DATABASE_NAME
+   注意: 在 MongoDB 中，集合只有在内容插入后才会创建! 
+   就是说，创建集合(数据表)后要再插入一个文档(记录)，集合才会真正创建。
+   
+   有一些数据库名是保留的，可以直接访问这些有特殊作用的数据库。
+   admin： 从权限的角度来看，这是"root"数据库。要是将一个用户添加到这个数据库，这个用户自动继承所有数据库的权限。
+   一些特定的服务器端命令也只能从这个数据库运行，比如列出所有的数据库或者关闭服务器。
+   local: 这个数据永远不会被复制，可以用来存储限于本地单台服务器的任意集合
+   config: 当Mongo用于分片设置时，config数据库在内部使用，用于保存分片的相关信息。
+   
+8. 删除数据库：
+   use dbName;  // switch to db dbName
+   db.dropDatabase();
+   查看数据库：
+   show dbs;
+
+*  创建集合:
+   db.createCollection(collectionName, options);
+   
+   options: 
+   capped 	布尔 	（可选）如果为 true，则创建固定集合。固定集合是指有着固定大小的集合，当达到最大值时，它会自动覆盖最早的文档。
+   当该值为 true 时，必须指定 size 参数。
+   autoIndexId 	布尔 	（可选）如为 true，自动在 _id 字段创建索引。默认为 false。
+   size 	数值 	（可选）为固定集合指定一个最大值，以千字节计（KB）。
+   如果 capped 为 true，也需要指定该字段。
+   max 	数值 	（可选）指定固定集合中包含文档的最大数量。
+   
+*  删除集合:
+   db.collectionName.drop();
+   查看已有集合：
+   show collections;
+   
+9. 插入文档：
+   * Method 1:
+   db.COLLECTION_NAME.insert({title: 'MongoDB 教程', 
+    description: 'MongoDB 是一个 Nosql 数据库',
+    by: '菜鸟教程',
+    url: 'http://www.runoob.com',
+    tags: ['mongodb', 'database', 'NoSQL'],
+    likes: 100
+   });
+   * Method 2:
+   将数据定义为一个变量：
+   document=({title: 'MongoDB 教程', 
+    description: 'MongoDB 是一个 Nosql 数据库',
+    by: '菜鸟教程',
+    url: 'http://www.runoob.com',
+    tags: ['mongodb', 'database', 'NoSQL'],
+    likes: 100
+   });
+   db.COLLECTION_NAME.insert(document);   
+   
+   查看已插入文档：
+   db.COLLECTION_NAME.find();
+   
+   *Method 3:
+   db.collection.insertOne():向指定集合中插入一条文档数据
+   db.collection.insertMany():向指定集合中插入多条文档数据
+   
+10. 更新文档：
+   * Method 1:
+   update() 方法
+
+   update() 方法用于更新已存在的文档。语法格式如下：
+
+   db.collection.update(
+     <query>,
+     <update>,
+     {
+       upsert: <boolean>,
+       multi: <boolean>,
+       writeConcern: <document>
+     }
+    )
+
+   参数说明：
+
+    query : update的查询条件，类似sql update查询内where后面的。
+    update : update的对象和一些更新的操作符（如$,$inc...）等，也可以理解为sql update查询内set后面的
+    upsert : 可选，这个参数的意思是，如果不存在update的记录，是否插入objNew,true为插入，默认是false，不插入。
+    multi : 可选，mongodb 默认是false,只更新找到的第一条记录，如果这个参数为true,就把按条件查出来多条记录全部更新。
+    writeConcern :可选，抛出异常的级别。
+
+    * Method 2:
+	save()方法：
+	
+	save() 方法通过传入的文档来替换已有文档。语法格式如下：
+
+    db.collection.save(
+       <document>,
+      {
+         writeConcern: <document>
+      }
+    )
+
+    参数说明：
+
+    document : 文档数据。
+    writeConcern :可选，抛出异常的级别。
+
+11. 删除文档：
+    remove() 方法的基本语法格式如下所示：
+
+    db.collection.remove(
+      <query>,
+      {
+       justOne: <boolean>,
+       writeConcern: <document>
+      }
+    )
+    
+	参数说明：
+
+    query :（可选）删除的文档的条件。
+    justOne : （可选）如果设为 true 或 1，则只删除一个文档，如果不设置该参数，或使用默认值 false，则删除所有匹配条件的文档。
+    writeConcern :（可选）抛出异常的级别。
+
+12. 查询文档：
+    MongoDB 查询数据的语法格式如下：
+
+    db.collection.find(query, projection)
+
+    query ：可选，使用查询操作符指定查询条件
+    projection ：可选，使用投影操作符指定返回的键。查询时返回文档中所有键值， 只需省略该参数即可（默认省略）。
+	
+    (可使用 $type 检索匹配的数据类型，并返回结果
+	如果想获取 "col" 集合中 title 为 String 的数据，你可以使用以下命令：
+    db.col.find({"title" : {$type : 2}})
+    或
+    db.col.find({"title" : {$type : 'string'}})
+	类型 	             数字 	备注
+    Double 	              1 	 
+    String 	              2 	 
+    Object 	              3 	 
+    Array 	              4 	 
+    Binary data           5 	 
+    Undefined 	          6 	已废弃。
+    Object id 	          7 	 
+    Boolean 	          8 	 
+    Date 	              9 	 
+    Null 	              10 	 
+    Regular Expression    11 	 
+    JavaScript 	          13 	 
+    Symbol 	              14 	 
+    JavaScript (with scope) 15 	 
+    32-bit integer 	      16 	 
+    Timestamp 	          17 	 
+    64-bit integer 	      18 	 
+    Min key 	         255 	Query with -1.
+    Max key 	         127
+	)	
+	
+	* MongoDB AND 条件
+
+    MongoDB 的 find() 方法可以传入多个键(key)，每个键(key)以逗号隔开，即常规 SQL 的 AND 条件。
+
+    语法格式如下：
+    >db.col.find({key1:value1, key2:value2}).pretty()
+	
+	* MongoDB OR 条件
+
+    MongoDB OR 条件语句使用了关键字 $or,语法格式如下：
+
+    >db.col.find(
+    {
+      $or: [
+         {key1: value1}, {key2:value2}
+      ]
+    }
+    ).pretty()
+	
+	* 复合条件：
+	以下实例演示了 AND 和 OR 联合使用，类似常规 SQL 语句为： 'where likes>50 AND (by = '菜鸟教程' OR title = 'MongoDB 教程')'
+
+    >db.col.find({"likes": {$gt:50}, $or: [{"by": "菜鸟教程"},{"title": "MongoDB 教程"}]}).pretty();
+	
+	* sort()方法排序：
+	在 MongoDB 中使用 sort() 方法对数据进行排序，sort() 方法可以通过参数指定排序的字段，并使用 1 和 -1 来指定排序的方式，其中 1 为升序排列，而 -1 是用于降序排列。
+    语法
+
+    sort()方法基本语法如下所示：
+
+    >db.COLLECTION_NAME.find().sort({KEY:1});
+	
+13. MongoDB 索引：
+    db.collectionName.createIndex(keys,optiond);
+	
+	createIndex() 接收可选参数，可选参数列表如下：
+    Parameter	Type	Description
+    background	Boolean	建索引过程会阻塞其它数据库操作，background可指定以后台方式创建索引，即增加 "background" 可选参数。 "background" 默认值为false。
+    unique	Boolean	建立的索引是否唯一。指定为true创建唯一索引。默认值为false.
+    name	string	索引的名称。如果未指定，MongoDB的通过连接索引的字段名和排序顺序生成一个索引名称。
+    dropDups	Boolean	3.0+版本已废弃。在建立唯一索引时是否删除重复记录,指定 true 创建唯一索引。默认值为 false.
+    sparse	Boolean	对文档中不存在的字段数据不启用索引；这个参数需要特别注意，如果设置为true的话，在索引字段中不会查询出不包含对应字段的文档.。默认值为 false.
+    expireAfterSeconds	integer	指定一个以秒为单位的数值，完成 TTL设定，设定集合的生存时间。
+    v	index version	索引的版本号。默认的索引版本取决于mongod创建索引时运行的版本。
+    weights	document	索引权重值，数值在 1 到 99,999 之间，表示该索引相对于其他索引字段的得分权重。
+    default_language	string	对于文本索引，该参数决定了停用词及词干和词器的规则的列表。 默认为英语
+    language_override	string	对于文本索引，该参数指定了包含在文档中的字段名，语言覆盖默认的language，默认值为 language.
+
+14. MongoDB 聚合(aggregate):
+    >db.COLLECTION_NAME.aggregate(AGGREGATE_OPERATION);
+	
+	in this case: 计算每个作者所写的文章数
+	> db.mycol.aggregate([{$group : {_id : "$by_user", num_tutorial : {$sum : 1}}}])
+	
+15. MongoDB 副本集：
+    通过指定 --replSet 选项来启动mongoDB。--replSet 基本语法格式如下：
+    mongod --port "PORT" --dbpath "YOUR_DB_DATA_PATH" --replSet "REPLICA_SET_INSTANCE_NAME"
+	
+	In the case:
+	mongod --port 27017 --dbpath "YOUR_DB_DATA_PATH" --replSet rs0
+    以上实例会启动一个名为rs0的MongoDB实例，其端口号为27017。
+	
+	副本集添加成员: 添加副本集的成员，我们需要使用多台服务器来启动mongo服务
+	假设你已经启动了一个名为mongod1.net，端口号为27017的Mongo服务。 在客户端命令窗口使用rs.add() 命令将其添加到副本集中，命令如下所示：
+    >rs.add("mongod1.net:27017")
+	
+	判断当前运行的Mongo服务是否为主节点可以使用命令db.isMaster() 。
+	副本集在主机宕机后，副本会接管主节点成为主节点，不会出现宕机的情况。
+	
+16. MongoDB 备份和恢复：
+    备份：
+    >mongodump -h dbhost -d dbname -o dbdirectory
+	-h：MongDB所在服务器地址  -d：需要备份的数据库实例 -o：备份的数据存放位置
+	恢复：
+	mongorestore命令脚本语法如下：
+    >mongorestore -h <hostname><:port> -d dbname <path>
+	
+17. MongoDB 关系:
+    * 嵌入式关系：
+	把用户地址嵌入到用户的文档中：
+   {
+   "_id":ObjectId("52ffc33cd85242f436000001"),
+   "contact": "987654321",
+   "dob": "01-01-1991",
+   "name": "Tom Benzamin",
+   "address": [
+      {
+         "building": "22 A, Indiana Apt",
+         "pincode": 123456,
+         "city": "Los Angeles",
+         "state": "California"
+      },
+      {
+         "building": "170 A, Acropolis Apt",
+         "pincode": 456789,
+         "city": "Chicago",
+         "state": "Illinois"
+      }]
+    } 
+	* 引用式关系：
+	把用户数据文档和用户地址数据文档分开，通过引用文档的 id 字段来建立关系。
+   {
+   "_id":ObjectId("52ffc33cd85242f436000001"),
+   "contact": "987654321",
+   "dob": "01-01-1991",
+   "name": "Tom Benzamin",
+   "address_ids": [
+      ObjectId("52ffc4a5d85242602e000000"),
+      ObjectId("52ffc4a5d85242602e000001")
+   ]
+   }
+
+18. MongoDB 数据库引用：
+    使用DBRefs:
+	{ $ref : , $id : , $db :  }
+
+    三个字段表示的意义为：
+
+    $ref：集合名称
+    $id：引用的id
+    $db:数据库名称，可选参数
+	
+19. MongoDB 覆盖索引查询：
+    
+	覆盖查询是以下的查询：
+
+    所有的查询字段是索引的一部分
+    所有的查询返回字段在同一个索引中
+    
+20. MongoDB 查询分析:
+    MongoDB 查询分析常用函数有：explain() 和 hint()。
+    1. 使用 explain()
+    explain 操作提供了查询信息，使用索引及查询统计等。
+	
+	
